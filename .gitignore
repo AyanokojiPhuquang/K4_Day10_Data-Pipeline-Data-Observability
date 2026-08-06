@@ -5,3 +5,6 @@ lab.txt
 src/*.egg-info/
 lab/
 **/__pycache__/
+
+# ChromaDB persistence is rebuilt by the pipeline; do not commit its database files.
+data/chroma/
