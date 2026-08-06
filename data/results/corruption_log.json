@@ -1,0 +1,68 @@
+{
+  "total_original": 24,
+  "total_corrupted": 24,
+  "corruptions": [
+    {
+      "type": "drop_latest",
+      "description": "Dropped 3 most recent records",
+      "affected_ids": [
+        "10.2118/234689-pa",
+        "10.1111/exsy.70341",
+        "10.1007/s10278-026-02086-9"
+      ],
+      "count": 3
+    },
+    {
+      "type": "blank_summary",
+      "description": "Blanked summary for 4 records",
+      "affected_ids": [
+        "10.20944/preprints202602.0996.v1",
+        "10.21079/11681/50309",
+        "10.21203/rs.3.rs-10178277/v1",
+        "10.52060/juptik.v4i1.4318"
+      ],
+      "count": 4
+    },
+    {
+      "type": "noise_injection",
+      "description": "Injected noise into 3 summaries",
+      "affected_ids": [
+        "10.22214/ijraset.2026.82233",
+        "10.35314/3y9hy151",
+        "10.63646/kpqm1958"
+      ],
+      "count": 3
+    },
+    {
+      "type": "truncate_title",
+      "description": "Truncated title for 3 records",
+      "affected_ids": [
+        "10.21079/11681/50309",
+        "10.36227/techrxiv.177272838.89432844/v1",
+        "10.3390/buildings16132637"
+      ],
+      "count": 3
+    },
+    {
+      "type": "stale_date",
+      "description": "Set published date to 2020-01-01 for 4 records",
+      "affected_ids": [
+        "10.3390/app16052244",
+        "10.55041/isjem07213",
+        "10.2196/preprints.106157",
+        "10.21203/rs.3.rs-10178277/v1"
+      ],
+      "count": 4
+    },
+    {
+      "type": "duplicates",
+      "description": "Added 3 duplicate rows",
+      "affected_ids": [
+        "10.3390/buildings16132637",
+        "10.21203/rs.3.rs-10012178/v1",
+        "10.21203/rs.3.rs-9882260/v1"
+      ],
+      "count": 3
+    }
+  ]
+}

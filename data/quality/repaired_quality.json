@@ -1,0 +1,43 @@
+{
+  "report_name": "repaired_quality",
+  "timestamp": "2026-08-06T08:40:28.381185",
+  "total_records": 24,
+  "all_passed": true,
+  "checks": [
+    {
+      "check": "row_count",
+      "dimension": "completeness",
+      "threshold": ">= 1",
+      "value": 24,
+      "passed": true
+    },
+    {
+      "check": "paper_id_unique_not_null",
+      "dimension": "uniqueness",
+      "threshold": "0 nulls, all unique",
+      "value": "nulls=0, unique=24/24",
+      "passed": true
+    },
+    {
+      "check": "title_not_null",
+      "dimension": "completeness",
+      "threshold": "0 nulls/empty",
+      "value": "invalid=0",
+      "passed": true
+    },
+    {
+      "check": "summary_not_empty",
+      "dimension": "completeness",
+      "threshold": ">= 80% with summary",
+      "value": "100.00% (24/24)",
+      "passed": true
+    },
+    {
+      "check": "freshness",
+      "dimension": "timeliness",
+      "threshold": ">= 50% within 180 days",
+      "value": "100.00% fresh (24/24)",
+      "passed": true
+    }
+  ]
+}
