@@ -6,20 +6,20 @@
 
 | Thông tin         | Nội dung                  |
 | ------------------ | -------------------------- |
-| Khóa/Lớp         | [K3 hoặc K4]              |
-| Tên nhóm         | [Tên hoặc mã nhóm]     |
-| Repository         | [Đường dẫn repository] |
-| Ngày hoàn thành | [YYYY-MM-DD]               |
+| Khóa/Lớp         | K4              |
+| Tên nhóm         | TrickLord     |
+| Repository         | https://github.com/AyanokojiPhuquang/K4_Day10_Data-Pipeline-Data-Observability |
+| Ngày hoàn thành | [2026-08-06]               |
 
 ### Thành viên và phân công
 
 | STT | Họ và tên | MSSV | Vai trò chính | Module/deliverable sở hữu |
 | --: | --- | --- | --- | --- |
-| 1 | [Họ tên] | [MSSV] | [Vai trò] | [File, hàm hoặc artifact] |
-| 2 | [Họ tên] | [MSSV] | [Vai trò] | [File, hàm hoặc artifact] |
-| 3 | [Họ tên] | [MSSV] | [Vai trò] | [File, hàm hoặc artifact] |
-| 4 | [Nếu có] | [MSSV] | [Vai trò] | [File, hàm hoặc artifact] |
-| 5 | [Nếu có] | [MSSV] | [Vai trò] | [File, hàm hoặc artifact] |
+| 1 | Nguyễn Phú Quang | 2A202602017 | Source Ingestion  | crossref.py |
+| 2 | Trần Tuấn Linh | 2A202601912 | Observability | quality.py, reporting.py |
+| 3 | Nguyễn Hữu Huy | 2A202601220 |  Cleaning & Test set  | cleaning.py, testset.py |
+| 4 | Nguyễn Đại Quân | 2A202601933 | Corruption & Repair | [File, hàm hoặc artifact] |
+| 5 | Trần Kiên | 2A202601598 | Integration & Comparison | phase1.py, corruption_flow.py |
 
 ## 2. Tóm tắt kết quả
 
