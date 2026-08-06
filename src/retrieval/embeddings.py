@@ -1,4 +1,9 @@
-from __future__ import annotations
+import os
+import warnings
+
+os.environ["TRANSFORMERS_VERBOSITY"] = "error"
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+warnings.filterwarnings("ignore")
 
 from functools import lru_cache
 

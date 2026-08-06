@@ -1,143 +1,114 @@
 from __future__ import annotations
 
-import json
-import random
-
+from pathlib import Path
 import pandas as pd
 
-from core.utils import ensure_parent
+from core.utils import write_json
 
 
-def corrupt_clean_dataframe(df: pd.DataFrame, output_log_path) -> pd.DataFrame:
-    """Simulate multiple data corruption scenarios.
+def corrupt_clean_dataframe(df: pd.DataFrame, output_log_path: Path | str) -> pd.DataFrame:
+    """Simulate basic and advanced data corruption scenarios on the clean dataframe and save a corruption log."""
+    if df.empty:
+        write_json(Path(output_log_path), {"status": "empty_input"})
+        return df.copy()
 
-    Corruptions:
-    1. Drop some latest records (simulate data loss).
-    2. Blank summary on some rows (simulate missing data).
-    3. Inject noise into text (simulate data quality issues).
-    4. Truncate title (simulate incomplete ingestion).
-    5. Make published date old (simulate stale data).
-    6. Add duplicate rows (simulate deduplication failure).
-    7. Rebuild text_for_embedding.
-    8. Write corruption log.
-    """
-    random.seed(42)
     corrupted = df.copy()
-    log_entries: list[dict] = []
-    n = len(corrupted)
+    # Ensure string/text columns have str/object dtype to avoid Pandas float64 coercion errors
+    text_cols = ["paper_id", "title", "summary", "authors_joined", "categories_joined", "primary_category", "published", "abs_url", "pdf_url", "comment"]
+    for col in text_cols:
+        if col in corrupted.columns:
+            corrupted[col] = corrupted[col].fillna("").astype(str)
 
-    # 1. Drop latest records (top 3 by published date, already sorted desc)
-    drop_count = min(3, n // 4)
-    if drop_count > 0:
-        drop_indices = corrupted.head(drop_count).index.tolist()
-        dropped_ids = corrupted.loc[drop_indices, "paper_id"].tolist()
-        corrupted = corrupted.drop(drop_indices).reset_index(drop=True)
-        log_entries.append({
-            "type": "drop_latest",
-            "description": f"Dropped {drop_count} most recent records",
-            "affected_ids": dropped_ids,
-            "count": drop_count,
-        })
-        n = len(corrupted)
+    log_actions: list[str] = []
 
-    # 2. Blank summary on some rows
-    blank_count = min(4, n // 3)
-    if blank_count > 0:
-        blank_indices = random.sample(range(n), blank_count)
-        blank_ids = corrupted.iloc[blank_indices]["paper_id"].tolist()
-        corrupted.loc[corrupted.index[blank_indices], "summary"] = ""
-        corrupted.loc[corrupted.index[blank_indices], "summary_chars"] = 0
-        log_entries.append({
-            "type": "blank_summary",
-            "description": f"Blanked summary for {blank_count} records",
-            "affected_ids": blank_ids,
-            "count": blank_count,
-        })
+    # 1. Drop a few latest records (e.g., last 2 rows)
+    num_drop = min(2, len(corrupted) - 1)
+    if num_drop > 0:
+        dropped_ids = corrupted.tail(num_drop)["paper_id"].tolist()
+        corrupted = corrupted.iloc[:-num_drop].copy()
+        log_actions.append(f"Dropped {num_drop} latest records: {dropped_ids}")
 
-    # 3. Inject noise into summary
-    noise_count = min(3, n // 4)
-    if noise_count > 0:
-        available = [i for i in range(n) if corrupted.iloc[i]["summary"] != ""]
-        noise_indices = random.sample(available, min(noise_count, len(available)))
-        noise_ids = corrupted.iloc[noise_indices]["paper_id"].tolist()
-        for idx in noise_indices:
-            original = corrupted.iloc[idx]["summary"]
-            corrupted.at[corrupted.index[idx], "summary"] = "CORRUPTED_NOISE " + original[:50] + " GARBAGE_DATA xyz123"
-        log_entries.append({
-            "type": "noise_injection",
-            "description": f"Injected noise into {len(noise_indices)} summaries",
-            "affected_ids": noise_ids,
-            "count": len(noise_indices),
-        })
+    corrupted = corrupted.reset_index(drop=True)
 
-    # 4. Truncate title
-    trunc_count = min(3, n // 4)
-    if trunc_count > 0:
-        trunc_indices = random.sample(range(n), trunc_count)
-        trunc_ids = corrupted.iloc[trunc_indices]["paper_id"].tolist()
-        for idx in trunc_indices:
-            original = corrupted.iloc[idx]["title"]
-            corrupted.at[corrupted.index[idx], "title"] = original[:15] + "..."
-        log_entries.append({
-            "type": "truncate_title",
-            "description": f"Truncated title for {trunc_count} records",
-            "affected_ids": trunc_ids,
-            "count": trunc_count,
-        })
+    # 2. Blank summary in row 0
+    if len(corrupted) > 0:
+        paper_id = corrupted.at[0, "paper_id"]
+        corrupted.at[0, "summary"] = ""
+        corrupted.at[0, "summary_chars"] = 0
+        log_actions.append(f"Blanked summary for paper_id: {paper_id}")
 
-    # 5. Make published date old (stale)
-    stale_count = min(4, n // 3)
-    if stale_count > 0:
-        stale_indices = random.sample(range(n), stale_count)
-        stale_ids = corrupted.iloc[stale_indices]["paper_id"].tolist()
-        for idx in stale_indices:
-            corrupted.at[corrupted.index[idx], "published"] = "2020-01-01"
-            corrupted.at[corrupted.index[idx], "age_days"] = 2000
-        log_entries.append({
-            "type": "stale_date",
-            "description": f"Set published date to 2020-01-01 for {stale_count} records",
-            "affected_ids": stale_ids,
-            "count": stale_count,
-        })
+    # 3. Inject random noise into summary in row 1
+    if len(corrupted) > 1:
+        paper_id = corrupted.at[1, "paper_id"]
+        corrupted.at[1, "summary"] = "NOISE " * 20 + " [CORRUPTED TEXT]"
+        corrupted.at[1, "summary_chars"] = len(corrupted.at[1, "summary"])
+        log_actions.append(f"Injected noise into summary for paper_id: {paper_id}")
 
-    # 6. Add duplicate rows
-    dup_count = min(3, n // 4)
-    if dup_count > 0:
-        dup_indices = random.sample(range(n), dup_count)
-        dup_rows = corrupted.iloc[dup_indices]
-        dup_ids = dup_rows["paper_id"].tolist()
-        corrupted = pd.concat([corrupted, dup_rows], ignore_index=True)
-        log_entries.append({
-            "type": "duplicates",
-            "description": f"Added {dup_count} duplicate rows",
-            "affected_ids": dup_ids,
-            "count": dup_count,
-        })
+    # 4. Truncate title in row 2
+    if len(corrupted) > 2:
+        paper_id = corrupted.at[2, "paper_id"]
+        corrupted.at[2, "title"] = corrupted.at[2, "title"][:10] + "..."
+        log_actions.append(f"Truncated title for paper_id: {paper_id}")
 
-    # 7. Rebuild text_for_embedding
-    def rebuild_text(row):
-        parts = [f"Title: {row['title']}"]
-        if row["summary"]:
-            parts.append(f"Abstract: {row['summary']}")
-        if row["authors_joined"]:
-            parts.append(f"Authors: {row['authors_joined']}")
-        if row["categories_joined"]:
-            parts.append(f"Categories: {row['categories_joined']}")
-        return "\n".join(parts)
+    # 5. Make published date stale in row 3
+    if len(corrupted) > 3:
+        paper_id = corrupted.at[3, "paper_id"]
+        corrupted.at[3, "published"] = "2010-01-01"
+        corrupted.at[3, "age_days"] = 5000
+        log_actions.append(f"Set publication date to stale (2010-01-01) for paper_id: {paper_id}")
 
-    corrupted["text_for_embedding"] = corrupted.apply(rebuild_text, axis=1)
+    # 6. Add duplicate row (duplicate row 0)
+    if len(corrupted) > 0:
+        dup_row = corrupted.iloc[[0]].copy()
+        corrupted = pd.concat([corrupted, dup_row], ignore_index=True)
+        log_actions.append(f"Added duplicate row for paper_id: {dup_row.iloc[0]['paper_id']}")
 
-    # 8. Write corruption log
-    log = {
-        "total_original": len(df),
-        "total_corrupted": len(corrupted),
-        "corruptions": log_entries,
-    }
-    ensure_parent(output_log_path)
-    output_log_path.write_text(
-        json.dumps(log, indent=2, ensure_ascii=False) + "\n",
-        encoding="utf-8",
+    # ==================== ADVANCED CORRUPTION SCENARIOS ====================
+
+    # 7. Author Entity Swap (Swap authors between row 0 and row 4 if available)
+    if len(corrupted) > 4:
+        id_0 = corrupted.at[0, "paper_id"]
+        id_4 = corrupted.at[4, "paper_id"]
+        authors_0 = corrupted.at[0, "authors_joined"]
+        authors_4 = corrupted.at[4, "authors_joined"]
+
+        corrupted.at[0, "authors_joined"] = authors_4
+        corrupted.at[4, "authors_joined"] = authors_0
+        log_actions.append(f"Swapped authors between paper_id {id_0} and {id_4} (Factuality corruption)")
+
+    # 8. UTF-8 Mojibake / Encoding Noise Injection in row 4
+    if len(corrupted) > 4:
+        paper_id = corrupted.at[4, "paper_id"]
+        corrupted.at[4, "summary"] = corrupted.at[4, "summary"] + " â€œMojibake Encoding NoiseÃ©â€™"
+        log_actions.append(f"Injected UTF-8 Mojibake encoding noise into summary for paper_id: {paper_id}")
+
+    # 9. Category Misclassification in row 5 if available
+    if len(corrupted) > 5:
+        paper_id = corrupted.at[5, "paper_id"]
+        corrupted.at[5, "categories_joined"] = "Agriculture, Veterinary Sciences, Soil Science"
+        corrupted.at[5, "primary_category"] = "Agriculture"
+        log_actions.append(f"Misclassified domain category to Agriculture for paper_id: {paper_id}")
+
+    # 10. Malformed URL artifact in row 5
+    if len(corrupted) > 5:
+        paper_id = corrupted.at[5, "paper_id"]
+        corrupted.at[5, "abs_url"] = "https://invalid_broken_url_schema"
+        log_actions.append(f"Set malformed abs_url for paper_id: {paper_id}")
+
+    # Rebuild text_for_embedding
+    corrupted["text_for_embedding"] = (
+        "Title: " + corrupted["title"].astype(str) + "\n" +
+        "Authors: " + corrupted["authors_joined"].astype(str) + "\n" +
+        "Categories: " + corrupted["categories_joined"].astype(str) + "\n" +
+        "Published: " + corrupted["published"].astype(str) + "\n" +
+        "Summary: " + corrupted["summary"].astype(str)
     )
-    print(f"[corruption] Applied {len(log_entries)} corruption types, "
-          f"records: {len(df)} -> {len(corrupted)}")
+
+    log_payload = {
+        "status": "success",
+        "total_corrupted_rows": len(corrupted),
+        "actions_taken": log_actions,
+    }
+
+    write_json(Path(output_log_path), log_payload)
     return corrupted

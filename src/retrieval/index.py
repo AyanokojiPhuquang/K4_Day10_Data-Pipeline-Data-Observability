@@ -140,11 +140,20 @@ class LocalEmbeddingIndex:
 
     def search(self, query: str, top_k: int | None = None) -> list[SearchResult]:
         query_embedding = self.embedding_model.embed_query(query)
-        results = self.collection.query(
-            query_embeddings=[query_embedding],
-            n_results=top_k or self.settings.top_k,
-            include=["documents", "metadatas", "distances"],
-        )
+        try:
+            results = self.collection.query(
+                query_embeddings=[query_embedding],
+                n_results=top_k or self.settings.top_k,
+                include=["documents", "metadatas", "distances"],
+            )
+        except Exception:
+            self.collection = self.client.get_collection(name=self.collection_name)
+            results = self.collection.query(
+                query_embeddings=[query_embedding],
+                n_results=top_k or self.settings.top_k,
+                include=["documents", "metadatas", "distances"],
+            )
+
         ids = results.get("ids", [[]])[0]
         documents = results.get("documents", [[]])[0]
         metadatas = results.get("metadatas", [[]])[0]
