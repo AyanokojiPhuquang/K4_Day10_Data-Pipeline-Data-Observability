@@ -161,36 +161,51 @@ with tab_observability:
     c_metrics = read_json(settings.paths.corrupted_metrics) if settings.paths.corrupted_metrics.exists() else {}
     r_metrics = read_json(settings.paths.repaired_metrics) if settings.paths.repaired_metrics.exists() else {}
 
+    # Active collection metrics
+    active_metrics = b_metrics if active_dataset_option == "Baseline" else (c_metrics if active_dataset_option == "Corrupted" else r_metrics)
+
+
+    def get_delta_str(key: str, is_pct: bool = False, precision: int = 4) -> str | None:
+        if active_dataset_option == "Baseline" or not b_metrics or not active_metrics:
+            return None
+        val = active_metrics.get(key, 0.0)
+        base_val = b_metrics.get(key, 0.0)
+        diff = val - base_val
+        if is_pct:
+            return f"{diff:+.2%} vs Baseline"
+        return f"{diff:+.{precision}f} vs Baseline"
+
     col_m1, col_m2, col_m3, col_m4 = st.columns(4)
 
     with col_m1:
         with st.container(border=True):
             st.metric(
                 label="Retrieval hit rate",
-                value=f"{b_metrics.get('retrieval_hit_rate', 0.0):.2%}" if b_metrics else "N/A",
-                delta=f"Corrupted: {c_metrics.get('retrieval_hit_rate', 0.0):.2%}" if c_metrics else None,
+                value=f"{active_metrics.get('retrieval_hit_rate', 0.0):.2%}" if active_metrics else "N/A",
+                delta=get_delta_str("retrieval_hit_rate", is_pct=True),
             )
     with col_m2:
         with st.container(border=True):
             st.metric(
                 label="Mean token F1",
-                value=f"{b_metrics.get('mean_token_f1', 0.0):.4f}" if b_metrics else "N/A",
-                delta=f"Corrupted: {c_metrics.get('mean_token_f1', 0.0):.4f}" if c_metrics else None,
+                value=f"{active_metrics.get('mean_token_f1', 0.0):.4f}" if active_metrics else "N/A",
+                delta=get_delta_str("mean_token_f1", precision=4),
             )
     with col_m3:
         with st.container(border=True):
             st.metric(
                 label="LLM judge accuracy",
-                value=f"{b_metrics.get('judge_accuracy', 0.0):.2%}" if b_metrics else "N/A",
-                delta=f"Corrupted: {c_metrics.get('judge_accuracy', 0.0):.2%}" if c_metrics else None,
+                value=f"{active_metrics.get('judge_accuracy', 0.0):.2%}" if active_metrics else "N/A",
+                delta=get_delta_str("judge_accuracy", is_pct=True),
             )
     with col_m4:
         with st.container(border=True):
             st.metric(
                 label="Mean judge score",
-                value=f"{b_metrics.get('mean_judge_score', 0.0):.2f}" if b_metrics else "N/A",
-                delta=f"Corrupted: {c_metrics.get('mean_judge_score', 0.0):.2f}" if c_metrics else None,
+                value=f"{active_metrics.get('mean_judge_score', 0.0):.2f}" if active_metrics else "N/A",
+                delta=get_delta_str("mean_judge_score", precision=2),
             )
+
 
     st.divider()
 
