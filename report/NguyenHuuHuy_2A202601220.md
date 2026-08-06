@@ -129,25 +129,25 @@ print(len(samples))
 
 | Metric/signal          | Baseline | Corrupted | Repaired | Nhận xét của cá nhân |
 | ---------------------- | -------: | --------: | -------: | ---------------------- |
-| `retrieval_hit_rate` |     1.00 |      0.875 |     1.00 | Giảm 12.5 điểm % khi corrupt (drop 3 record mới nhất + 3 duplicate làm nhiễu top-k), phục hồi hoàn toàn sau repair. |
-| `mean_token_f1`      |     1.00 |      0.6975 |     1.00 | Giảm mạnh nhất — hợp lý vì `blank_summary` (4 record) và `noise_injection` (3 record) phá trực tiếp nội dung mà `qa.py` dùng để trả lời. |
-| `judge_accuracy`     |     1.00 |      0.6806 |     1.00 | ~32% câu hỏi bị LLM-judge chấm sai sau corrupt, khớp với các record bị hỏng nội dung (blank/noise summary, truncate title). |
-| `mean_judge_score`   |     5.00 |      3.72 |     5.00 | Giảm ~1.28/5 điểm trung bình, phục hồi hoàn toàn sau repair. |
-| Quality checks         | All Pass |  1 Failed | All Pass | Corrupted: `paper_id` uniqueness fail (21/24 unique) do `duplicate_row`, dù agent vẫn trả lời được — quality check bắt được lỗi mà agent metric không lộ rõ. |
-| Freshness status       |    FRESH (0 stale/24) |     FRESH (stale_rows=4/24) |    FRESH (0 stale/24) | `stale_date` đẩy 4 record về `2020-01-01`; vẫn qua ngưỡng "≥50% fresh" nên status tổng thể không đổi — ngưỡng hiện tại chưa đủ nhạy với mức corruption này. |
+| `retrieval_hit_rate` |     1.00 |      0.9167 |     1.00 | Giảm 8.33 điểm % khi corrupt (drop 2 records và các lỗi nội dung/metadata), phục hồi hoàn toàn sau repair. |
+| `mean_token_f1`      |     1.00 |      0.8653 |     1.00 | Giảm khi summary bị blank/nhiễu và title bị truncate; repair khôi phục hoàn toàn. |
+| `judge_accuracy`     |     1.00 |      0.8611 |     1.00 | 10/72 câu hỏi bị heuristic judge chấm không đúng sau corruption; repair đưa về baseline. |
+| `mean_judge_score`   |     5.00 |      4.44 |     5.00 | Giảm ~0.56/5 điểm trung bình, phục hồi hoàn toàn sau repair. |
+| Quality checks         | 5/5 Pass |  2/5 Pass | 5/5 Pass | Corrupted có 1 duplicate, 2 summary dưới 40 ký tự và 1 stale row; quality check bắt được lỗi độc lập với agent metric. |
+| Freshness status       | `is_fresh=true` (0 stale/24) | `is_fresh=true` (1 stale/23) | `is_fresh=true` (0 stale/24) | `stale_date` đẩy 1 record về `2010-01-01`; `is_fresh` vẫn true vì record mới nhất còn trong ngưỡng 180 ngày. |
 
 ### Kết luận từ số liệu
 
-1. **[Corruption `blank_summary`(4) + `noise_injection`(3) + `truncate_title`(3)]** → **[`summary_not_empty` tụt còn 83.33%, nội dung `text_for_embedding` của các record này bị rỗng/nhiễu]** → **[`mean_token_f1` giảm 1.0→0.6975 và `judge_accuracy` giảm 1.0→0.6806, vì `qa.py` trích câu trả lời trực tiếp từ `summary` đã hỏng]**.
+1. **[Corruption: drop 2 records, blank/noisy summary, truncate title và metadata faults]** → **[`summary_min_length` fail với 2 rows, uniqueness fail với 1 duplicate, freshness fail với 1 stale row]** → **[`mean_token_f1` giảm 1.0→0.8653 và `judge_accuracy` giảm 1.0→0.8611]**.
 2. **[Repair: chạy lại cleaning từ raw records gốc trong `data/raw/`, không sửa tay]** → **[`repaired_quality.json.all_passed=true`, `repaired_freshness_report.json.status="FRESH"` với 0 stale row, đúng bằng baseline]** → **[4 metric agent quay lại đúng giá trị baseline: 1.0/1.0/1.0/5.0]**.
 
 **Corruption nào ảnh hưởng rõ nhất và vì sao?**
 
-`blank_summary` và `noise_injection` ảnh hưởng rõ nhất đến `mean_token_f1`/`judge_accuracy` vì `qa.py` trích câu trả lời trực tiếp từ `summary` cho loại câu hỏi `summary` — hỏng summary là hỏng thẳng câu trả lời. Ngược lại, `stale_date` đổi 4 record về `2020-01-01` nhưng gần như không kéo `retrieval_hit_rate`/`judge_accuracy` xuống, vì semantic search dựa trên nội dung text chứ không dựa vào ngày xuất bản.
+`blank_summary` và `noise_injection` ảnh hưởng rõ nhất đến `mean_token_f1`/`judge_accuracy` vì `qa.py` trích câu trả lời trực tiếp từ `summary` cho loại câu hỏi `summary` — hỏng summary là hỏng thẳng câu trả lời. Ngược lại, `stale_date` đổi 1 record về `2010-01-01` nhưng không phải tín hiệu chính kéo retrieval xuống, vì semantic search dựa trên nội dung text chứ không dựa vào ngày xuất bản.
 
 **Kết quả nào khác với kỳ vọng ban đầu?**
 
-Tôi kỳ vọng freshness status sẽ chuyển "STALE" sau khi 4/24 record (~16.7%) bị đẩy về năm 2020, nhưng ngưỡng check trong dataset là "≥50% record trong hạn" nên status vẫn "FRESH". Giả thuyết "freshness sẽ tự phát hiện corruption stale_date" không đúng ở mức độ corruption này — cần đọc kỹ ngưỡng thay vì chỉ nhìn cờ pass/fail tổng, và đây là điểm nhóm có thể cân nhắc siết ngưỡng nếu muốn freshness nhạy hơn.
+`is_fresh` vẫn là `true` dù có 1 stale row vì hàm freshness đánh giá tuổi của record mới nhất, không phải chỉ nhìn số rows cũ. Vì vậy cần đọc cả `stale_rows` lẫn `is_fresh`, thay vì coi cờ tổng thể FRESH là không có bất thường.
 
 ## 9. Điều học được và hướng cải thiện
 

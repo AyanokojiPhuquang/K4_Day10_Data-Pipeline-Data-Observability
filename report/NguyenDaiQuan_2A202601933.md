@@ -142,17 +142,17 @@ uv run python script/run_corruption_flow.py
 
 | Metric/signal          | Baseline | Corrupted | Repaired | Nhận xét của cá nhân |
 | ---------------------- | -------: | --------: | -------: | ------------------------- |
-| `retrieval_hit_rate` |   100.0% |    100.0% |   100.0% | Khả năng định vị tài liệu không đổi |
-| `mean_token_f1`      |   1.0000 |    0.8750 |   1.0000 | Giảm 12.5% do rỗng summary & tiêm nhiễu text |
-| `judge_accuracy`     |   100.0% |     87.5% |   100.0% | Giảm 12.5% độ chính xác câu trả lời |
-| `mean_judge_score`   | 5.0 / 5.0| 4.5 / 5.0 | 5.0 / 5.0| Giảm điểm đánh giá chất lượng xuống 4.5 |
-| Quality checks         | PASSED (6/6) | FAILED (3/6) | PASSED (6/6) | Bật cờ báo động lỗi Uniqueness, Length, URL |
-| Freshness status       |    FRESH |     STALE |    FRESH | Bật cờ báo động bài báo cũ năm 2010 |
+| `retrieval_hit_rate` |   100.0% |    91.67% |   100.0% | Giảm 8.33 điểm %, phục hồi hoàn toàn sau repair |
+| `mean_token_f1`      |   1.0000 |    0.8653 |   1.0000 | Giảm do summary/title bị corrupt, phục hồi sau re-clean từ raw |
+| `judge_accuracy`     |   100.0% |     86.11% |   100.0% | Giảm 13.89 điểm % độ chính xác câu trả lời |
+| `mean_judge_score`   | 5.0 / 5.0| 4.4444 / 5.0 | 5.0 / 5.0| Giảm điểm đánh giá chất lượng rồi phục hồi |
+| Quality checks         | PASSED (5/5) | FAILED (2/5 pass) | PASSED (5/5) | Bật cờ uniqueness (1 duplicate), summary length (2 rows), freshness (1 row) |
+| Freshness status       | `is_fresh=true`, 0 stale | `is_fresh=true`, 1 stale | `is_fresh=true`, 0 stale | Dataset vẫn fresh theo record mới nhất nhưng có stale row cần theo dõi |
 
 ### Kết luận từ số liệu
 
 1. **[Data corruption] ➔ [quality/freshness signal thay đổi] ➔ [agent metric thay đổi]:**  
-   Khi giả lập Corruption (xóa summary, chèn nhiễu, đẩy năm 2010), Data Quality báo `FAILED` và Freshness báo `STALE`, dẫn tới chỉ số `mean_token_f1` của Agent sụt giảm từ `1.0000` xuống `0.8750`.
+    Khi giả lập Corruption (drop records, xóa/chèn nhiễu summary, truncate title, đẩy một ngày về năm 2010 và thêm duplicate), Data Quality báo `FAILED` (2/5 pass) dù `is_fresh` vẫn true; `mean_token_f1` của Agent sụt từ `1.0000` xuống `0.8653`.
 2. **[Repair action] ➔ [quality/freshness signal phục hồi] ➔ [agent metric phục hồi]:**  
    Khi thực hiện Data Repair từ Raw Snapshot, Quality Checks quay lại `PASSED`, Freshness quay lại `FRESH`, kéo chỉ số `mean_token_f1` và `judge_accuracy` khôi phục hoàn toàn về `1.0000` (100%).
 
