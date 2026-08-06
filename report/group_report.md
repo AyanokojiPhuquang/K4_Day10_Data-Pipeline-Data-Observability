@@ -18,7 +18,7 @@
 | 1 | Nguyễn Phú Quang | 2A202602017 | Source Ingestion  | crossref.py |
 | 2 | Trần Tuấn Linh | 2A202601912 | Observability | quality.py, reporting.py |
 | 3 | Nguyễn Hữu Huy | 2A202601220 |  Cleaning & Test set  | cleaning.py, testset.py |
-| 4 | Nguyễn Đại Quân | 2A202601933 | Corruption & Repair | [File, hàm hoặc artifact] |
+| 4 | Nguyễn Đại Quân | 2A202601933 | Corruption & Repair | corruption.py |
 | 5 | Trần Kiên | 2A202601598 | Integration & Comparison | phase1.py, corruption_flow.py |
 
 ## 2. Tóm tắt kết quả
