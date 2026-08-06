@@ -1,43 +1,55 @@
 {
   "report_name": "baseline_quality",
-  "timestamp": "2026-08-06T08:39:08.840754",
-  "total_records": 24,
-  "all_passed": true,
+  "generated_at": "2026-08-06T10:57:43.775451+00:00",
+  "total_rows": 24,
   "checks": [
     {
-      "check": "row_count",
+      "name": "row_count",
       "dimension": "completeness",
-      "threshold": ">= 1",
-      "value": 24,
-      "passed": true
+      "passed": true,
+      "details": {
+        "total_rows": 24
+      }
     },
     {
-      "check": "paper_id_unique_not_null",
+      "name": "paper_id_not_null_unique",
       "dimension": "uniqueness",
-      "threshold": "0 nulls, all unique",
-      "value": "nulls=0, unique=24/24",
-      "passed": true
+      "passed": true,
+      "details": {
+        "null_count": 0,
+        "duplicate_count": 0
+      }
     },
     {
-      "check": "title_not_null",
+      "name": "title_not_null",
       "dimension": "completeness",
-      "threshold": "0 nulls/empty",
-      "value": "invalid=0",
-      "passed": true
+      "passed": true,
+      "details": {
+        "null_count": 0,
+        "blank_count": 0
+      }
     },
     {
-      "check": "summary_not_empty",
-      "dimension": "completeness",
-      "threshold": ">= 80% with summary",
-      "value": "100.00% (24/24)",
-      "passed": true
+      "name": "summary_min_length",
+      "dimension": "validity",
+      "passed": true,
+      "details": {
+        "min_chars": 40,
+        "too_short_count": 0
+      }
     },
     {
-      "check": "freshness",
+      "name": "freshness_age_days",
       "dimension": "timeliness",
-      "threshold": ">= 50% within 180 days",
-      "value": "100.00% fresh (24/24)",
-      "passed": true
+      "passed": true,
+      "details": {
+        "threshold_days": 180,
+        "stale_count": 0
+      }
     }
-  ]
+  ],
+  "passed_checks": 5,
+  "total_checks": 5,
+  "success_rate": 1.0,
+  "all_passed": true
 }

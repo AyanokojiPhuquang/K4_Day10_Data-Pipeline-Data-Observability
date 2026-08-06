@@ -12,7 +12,7 @@ Mỗi nhóm nộp:
 Khi cần lưu nhiều báo cáo thành viên trong cùng repository, nhóm nên tạo bản sao theo quy ước:
 
 ```text
-<MSSV>_HoTen.md
+<HoTen>_<MSSV>.md
 ```
 
 ## 2. Kết quả chung cần đạt

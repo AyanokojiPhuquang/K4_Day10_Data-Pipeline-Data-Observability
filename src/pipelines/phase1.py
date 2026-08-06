@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from core.config import load_settings
-from core.utils import now_utc, read_json, write_csv, write_json
+from core.utils import now_utc, write_csv, write_json
 from evaluation.metrics import evaluate_pipeline
 from evaluation.testset import build_test_set
 from ingestion.cleaning import build_clean_dataframe
